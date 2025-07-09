@@ -1,6 +1,6 @@
 ## To Be Better Javaer
 
-![img](java_img\tobebetterjavaer-map.png)
+![img](./java_img\tobebetterjavaer-map.png)
 
 ## 一. java概述
 
@@ -19,7 +19,7 @@
 
   java适用 **网络/分布环境**
 
-  ![image-20250428115241053](java_img\1-安全性.png)
+  ![image-20250428115241053](./java_img\1-安全性.png)
 
 - 并发性
 
@@ -41,7 +41,7 @@
 
 （java程序必须允许在JVM之上）
 
-![image-20250603123753562](java_img\jdkjrejvm.png)
+![image-20250603123753562](./java_img\jdkjrejvm.png)
 
 #### 3.1 JVM、JRE、JDK之间的关系
 
