@@ -1332,7 +1332,295 @@ Tips: 类实例化的时候执行**代码初始化块**，（是放在构造方�
 
 Tips：**静态初始化块**会在类 加载时执行，只会执行一次，优先于实例初始化和构造方法
 
-#### 1.6 抽象方法
+#### 1.6 抽象类 、接口
+
+- **抽象类 `abstract class 类名 {}`**
+
+  - 类名：“使用 Abstract 或 Base 开头”
+  - 类是抽象的，不能实例化。但可以由子类，通过`extends`继承抽象类
+  - 如果一个类定义了一个或多个抽象方法，那这个类必须是抽象类
+
+  ```java
+  public abstract class AbstractPlayer {
+  	abstract void play();
+      
+      public void sleep(){
+          System.out.println("抽象类中的普通方法");
+      }
+  }
+  ```
+
+  - 抽象类的子类必须实现父类中定义的抽象方法。
+
+  ```java
+  public class VolleyPlayer extends AbstractPlayer {
+  	@override
+      void play(){
+          System.out.println("排球运动员，玩");
+      }
+  }
+  ```
+
+- **接口 `interface`**
+
+  - 可以包含一些常量和方法 
+
+  ```java
+  public interface Electronic {
+      // 常量
+      String LED = "LED";  // ==> public static final String LED = "LED"
+      
+      // 抽象方法
+      int getElectricityUse();
+      // 等价：public abstract int getElectricityUse();
+      
+      // 静态方法 、 默认方法
+      static boolean isEnergyEfficient(String electronicTyepe){
+          return electronicType.equals(LED);
+      }
+      
+      default void printDescription(){
+          Syetem.out.println("电子");
+      }
+  }
+  ```
+
+  - 接口中的变量 编译时会 自动加上 **`public static final`修饰**
+  - 接口中的方法 编译时会 自动加上 **`public abstract`** 修饰（抽象方法）
+  -  没有使用`private`、`default`、或`static` 修饰的方法是**隐式抽象**的
+  - 接口不允许直接实例化，可以是空的（Serializable接口 `java.io`中）
+
+- Java原则上只支持单一继承，但通过接口可以实现多重继承的目的。
+
+- **多态：**
+
+  - 三个前提：要有继承关系、子类要重写父类的方法、父类引用指向子类对象。
+
+  ```java
+  public interface Shape{
+      String name();
+  }
+  
+  public class Circle implements Shape {
+      @Override
+      public String name(){
+          return "yuan";
+      }
+  }
+  
+  public class Square implements Shape {
+      @Override
+      public String name(){
+          return "fang";
+      }
+  }
+  
+  // test:
+  List<Shape> shapes = new ArrayList<>();
+  Shape cirShape = new Circle();
+  Shape squShape = new Square();
+  shapes.add(cirShape);
+  shapes.add(squShape);
+  for (Shape shape : shapes) {
+      System.out.println(shape.name());
+  }
+  // output：yuan \n fang
+  ```
+
+- **接口的设计模型：策略模式、适配器模式、工厂模式**
+
+  - **策略模式**：针对一组算法，将每一种算法**封装到具有共同接口的实现类中**，接口的设计者可以在不影响调用者的情况下对算法做出改变。
+
+  ```java
+  / 接口：教练
+  interface Coach {
+      // 方法：防守
+      void defend();
+  }
+  // 何塞·穆里尼奥
+  class Hesai implements Coach {
+      @Override
+      public void defend() {
+          System.out.println("防守赢得冠军");
+      }
+  }
+  // 德普·瓜迪奥拉
+  class Guatu implements Coach {
+      @Override
+      public void defend() {
+          System.out.println("进攻就是最好的防守");
+      }
+  }
+  // 策略模式： Demo可以理解为实现类
+  public class Demo {
+      // 参数为接口
+      public static void defend(Coach coach) {
+          coach.defend();
+      }
+      public static void main(String[] args) {
+          // 为同一个方法传递不同的对象
+          defend(new Hesai());
+          defend(new Guatu());
+      }
+  }
+  // 或者可以在另一个测试类中，假设Demo test = new Demo(), 那么test.defend(new 对象())；
+  ```
+
+  `Demo.defend()`方法可接受不同风格的Coach，并**根据所传递的参数对象不同产生不同的行为**。**策略模式** 
+
+  - **适配器模式**：针对调用者的需求对原有的接口进行转接
+
+  ```java
+  interface Coach {
+      void defend();
+      void attack();
+  }
+  
+  // 抽象类实现接口，并置空方法,抽象类的普通方法：
+  abstract class AdapterCoach implements Coach {
+      public void defend() {};
+      public void attack() {};
+  }
+  
+  // 新类继承适配器
+  class Hesai extends AdapterCoach {
+      public void defend() {
+          System.out.println("防守赢得冠军");
+      }
+  }
+  
+  public class Demo {
+      public static void main(String[] args) {
+          Coach coach = new Hesai();
+          coach.defend();
+      }
+  }
+  ```
+
+  Coash接口中定义了两个方法（`defend()`和 `attack()`），如果直接实现该接口，则需要对两个方法进行实现。因此采用 一个**抽象类作为中间件，即适配器**，抽象类实现接口，并 **将方法置空**，这样新的类可以绕开接口，继承抽象类，实现只对需要的方法进行覆盖。**适配器模式**
+
+  - **工厂模式**：什么工厂生产什么
+
+  上文例子：工厂模式：教练接口（用来指挥）、学院接口（产生教练）
+
+  ```java
+  public class Demo {
+      public static void create(CoachFactory factory) {
+          factory.createCoach().command();
+      }
+      
+      public static void main(String[] args) {
+          // 对于一支球队来说，需要什么样的教练就去找什么样的学院
+          // 学院会介绍球队对应水平的教练。
+          create(new ACoachFactory());
+          create(new CCoachFactory());
+      }
+  }
+  ```
+
+  需要A教练了，就到A学院去找教练。
+
+#### 1.7 内部类：成员内部类、局部内部类、匿名内部类、静态内部类
+
+- 成员内部类：
+
+  - 内部类可以无限制访问外部类的所有成员属性；
+  - 外部类要访问内部类的对象，必须先new一个内部类对象，再通过这个对象来访问。
+  - 静态方法中，要访问某个类的内部类，必须先创建一个外部类对象，在通过该对象创建内部类对象
+
+- 局部内部类：定义在一个方法或一个作用域中的类
+
+  - 类似于局部变量，不能被 权限修饰符修饰。
+
+- **匿名内部类**：（用的多，启动多线程的时候经常使用）
+
+  ```java
+  public class ThreadDemo{
+      public static void mian(String[] args) {
+          Thread t = new Thread(new Runnable()) {
+              @Override
+              public void run(){
+                  System.out.println(Thread.currentThread().getName())
+              }
+          });
+          t.start();
+      }
+  }
+  ```
+
+  - 唯一一种没有构造方法的类。
+  - 主要作用是用来继承其他类或者实现接口。
+
+- 静态内部类：与成员内部类类似，用`static`修饰
+
+  ```java
+  public class Wangsi {
+      static int age;
+      double money;
+      
+      static class Wangxxiaosi {
+          public Wangxxiaosi (){
+              System.out.println(age);
+          }
+      }
+  }
+  ```
+
+  - 由于`static` 静态内部类不允许访问外部类中 **非static**的变量和方法
+
+#### 1.8 三大特性：封装、继承、多态
+
+- **封装**
+
+- **继承**
+
+  - java只支持单继承extends，可以通过实现接口达到多继承的目的 （内部类、多层继承、实现接口）
+
+  - 方法重写`@Override` （外壳不变，核心内容重写）；方法重载`@Overload` （方法名形同，但参数不一致）;
+
+  - `Object`类时所有类层次结构的根类，隐式继承Obeject类，有一个无参构造方法；
+
+    像 toString()、equals()、hashCode()、wait()、notify()、getClass()等都是 Object 的方法。
+
+  - 初始化顺序：父类中静态成员变量、静态代码块 =》 子类中静态成员变量、静态代码款 ==》父类普通成员变量和代码块、构造方法 ==》 子类普通成员变量和代码块、构造方法
+
+- **多态** 
+
+  ```java
+  public class Wangxiaosan extends Wangsan {
+      private int age = 3;
+      public Wangxiaosan(int age) {
+          this.age = age;
+          System.out.println("王小三的年龄：" + this.age);
+      }
+  
+      public void write() { // 子类覆盖父类方法
+          System.out.println("我小三上幼儿园的年龄是：" + this.age);
+      }
+  
+      public static void main(String[] args) {
+          new Wangxiaosan(4);
+      }
+  }
+  
+  class Wangsan {
+      Wangsan () {
+          System.out.println("上幼儿园之前");
+          write();
+          System.out.println("上幼儿园之后");
+      }
+      public void write() {
+          System.out.println("老子上幼儿园的年龄是3岁半");
+      }
+  }
+  // out：
+  // 上幼儿园之前
+  // 我小三上幼儿园的年龄是：0 （父类的构造方法，wirte的方法被子类重写了，但父类中无age，默认值为0）
+  // 上幼儿园之后
+  // 王小三的年龄：4
+  ```
+
+#### 1.9 this 和 super关键字
 
 
 
