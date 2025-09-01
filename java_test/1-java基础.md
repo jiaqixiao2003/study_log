@@ -1620,7 +1620,730 @@ Tips：**静态初始化块**会在类 加载时执行，只会执行一次，�
   // 王小三的年龄：4
   ```
 
-#### 1.9 this 和 super关键字
+#### 1.9 this和super关键字
+
+**this关键字** 最常用的一个：作为引用变量，指向当前对象此外：
+
+- 调用当前类的方法；
+
+- `this()`调用当前类的构造方法
+
+  `this()`要放在构造方法的第一行；
+
+- 可以作为参数在方法（包括构造方法）中传递；
+
+- 可以作为方法的返回值，返回当前类的对象。
+
+**super关键字** 
+
+- 指向父类对象
+- 调用父类对象
+- `super()`可以调用父类的构造方法
+
+#### 10. static关键字
+
+**方便在没有创建对象的情况下调用**
+
+- 静态变量：
+
+  只在类加载的时候获取一次内存空间
+
+  ```java
+  public class Student {
+      String name;
+      int age;
+      static String school = "郑州大学";
+  
+      public Student(String name, int age) {
+          this.name = name;
+          this.age = age;
+      }
+  
+      public static void main(String[] args) {
+          Student s1 = new Student("沉默王二", 18);
+          Student s2 = new Student("沉默王三", 16);
+      }
+  }
+  ```
+
+  s1 和 s2 引用变量存放在 **栈（stack）**，两个对象存放在 **堆（heap）**，school静态变量放在静态区。
+
+  **注意**：静态变量 属于一个类，不要通过对象引用来访问，应该**直接通过类名来访问**
+
+- 静态方法：
+
+  （静态方法可以访问静态变量，但不允许访问非静态变量和方法）
+
+- 静态代码块：初始化一些静态变量，优先于`main()`方法致性
+
+#### 11. final 关键字
+
+- final 变量
+
+  final变量一旦初始化，就无法更改；
+
+  final修饰的成员变量必须有一个默认值；
+
+  ```java
+  public class Pig {
+     private String name;
+  
+      public String getName() {
+          return name;
+      }
+  
+      public void setName(String name) {
+          this.name = name;
+      }
+  }
+  // 定义一个final对象
+  final Pig pig = new Pig();
+  // 不能对pig重新赋值 pig = new Pig(); // ×
+  // 但是仍然可以通过set方法修改pig对象的name
+  final Pig pig = new Pig();
+  pig.setName("特立独行");
+  System.out.println(pig.getName()); // 特立独行
+  ```
+
+  final 和 static 一起修饰的成员变量： **常量**，全部大写表示；
+
+- final方法：
+
+  被 final修饰的方法不能被重写； （Thread类的`isAlive()`方法就是final的，用于确认线程是否处于活跃状态）
+
+- final类：
+
+  final类无法被继承；（String类就是final：为了实现字符常量池、线程安全、HashCode的不可变性）
+
+  类是final的 $\neq$ 类的对象是不可变的；  
+
+#### 12. instanceof关键字
+
+`(object) instanceof (type)` 判断对象是否符合制定的类，结果：`true / false`;
+
+```java
+class A{ }
+class B extends A{}
+
+A a = new A();
+System.out.println(A instanceof B);	// true，因为A 继承了B
+```
+
+- 当A 继承 B时，A `instanceof `B 即为true；
+- 当A 实现接口C时，A `instanceof` C 即为true；
+
+通常这样操作`instanceof`： 先判断类型，再强转
+
+```java
+if (obj instanceof String) {
+    String s = (String) obj;
+}
+```
+
+- Tips：JDK16之后: 简洁省略。
+
+  ```java
+  if (obj instanceof String s) {
+      // 如果类型匹配，直接使用s
+  }
+  ```
+
+#### 13 Java中不可变对象：
+
+- 不可变类（immutable）：类的对象再通过构造方法创建后状态不会再改变，赋值仅在构造方法中完成，不会提供任何setter方法供外部修改。
+  - 确保类是final的，不允许被继承；
+  - 确保所有成员变量（字段）是final的，只能在构造方法中初始化值，并不能被修改；
+  - 不提供setter方法；
+  - 如果要修改类的状态，必须返回一个新的对象。
+- String类：1）常量池的需要；2）hashCode的需要；3）线程安全。（Integer、Long等也是不可变类）
+
+```java
+public class Book {
+    private String name;
+    private int price;
+    
+    public String getName(){
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public int getPrice() {
+        return price;
+    }
+    public void setPrice(int price) {
+        this.price = price;
+    }
+    
+    @Override
+    public String toString(){
+		return "Book{" + "name= '" + name + '\'' + ", price= " + price + '}';	
+    }
+}
+
+public final class Writer {
+    private final String name;
+    private final int age;
+    private final Book book;
+
+    public Writer(String name, int age, Book book){
+        this.name = name;
+        this.age = age;
+        this.book = book;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public Book getBook() {
+        Book clone = new Book();
+        clone.setPrice(this.book.getPrice());
+        clone.setName(this.book.getName());
+        return clone;
+    }
+}
+
+    public static void main(String[] agrs) {
+        Book book = new Book();
+        book.setName("二哥的 Java 进阶之路");
+        book.setPrice(79);
+
+        Writer writer = new Writer("王二", 22, book);
+        System.out.println("定价：" + writer.getBook());
+        Book b2 = writer.getBook();
+        b2.setPrice(59);
+        System.out.println("促销价：" + writer.getBook());
+        System.out.println("促销价：" + b2);
+    }
+//定价：Book{name= '二哥的 Java 进阶之路', price= 79}
+//促销价：Book{name= '二哥的 Java 进阶之路', price= 79}
+//促销价：Book{name= '二哥的 Java 进阶之路', price= 59}
+```
+
+#### 14. @Override 方法重写  和 @Overload 方法重载的区别
+
+一个类中 有多个**名字相同但参数个数不同的方法**==》**方法重载**
+
+子类具有和父类一样的方法（**参数、返回类型、方法名相同**）==》**方法重写**
+
+- 方法重载：
+
+  如果参数类型相同的话，java提供了**可变参数**的方式
+
+  ```java
+  static int add(int ... args) {
+      int sum = 0;
+      for (int a : args) {
+  		sum += a;
+      }
+      return sum;
+  }
+  ```
+
+- 方法重写
+
+  必须和父类中的方法有相同的名字和参数、必须是继承关系；
+
+  final方法无法被继承，意味着无法被子类重写；static也不能被重写
+
+  要是子类和父类中**相同方法名中参数不同** ==》 既不属于方法重写、也不属于方法重载；
+
+  一个类继承了抽象类，那么抽象类中的方法必须在子类中被重写；
+
+#### 15. 枚举（enum）
+
+```java
+public enum PlayerType {
+    TENNIS,
+    FOOTBALL,
+    BASKETBALL
+}
+public enum PlayerType {
+    TENNIS("网球"),
+    FOOTBALL("足球"),
+    BASKETBALL("篮球");
+
+    private String name;
+
+    PlayerType(String name) {
+        this.name = name;
+    }
+}
+```
+
+EnumSet 针对枚举类型的Set接口，是一个抽象类，创建时不能使用new关键字。
+
+```java
+public static void main(String[] args) {
+    EnumSet<PlayerTyep> enumSetNone = EnumSet.noneOf(PlayerType.class);		// 创建了一个空的PlayerType
+    System.out.println(enumSetNone);
+    EnumSet<PlayerType> enumSetAll = EnumSet.allOf(PlayerTyepe.class);		// 创建了包含所有playertype类型的set
+    System.out.println(enumSetAll);
+}
+
+// 结果
+[]
+[TENNIS, FOOTBALL, BASKETBALL]
+```
+
+EnumMap<PlayerTyepe, String> 可以new
+
+```java
+EnumMap<PlayerType, String> enumMap = new EnumMap<>(PlayerType.class);
+enumMap.put(PlayerType.BASKETBALL,"篮球运动员");
+enumMap.put(PlayerType.FOOTBALL,"足球运动员");
+enumMap.put(PlayerType.TENNIS,"网球运动员");
+System.out.println(enumMap);
+
+System.out.println(enumMap.get(PlayerType.BASKETBALL));
+System.out.println(enumMap.containsKey(PlayerType.BASKETBALL));
+System.out.println(enumMap.remove(PlayerType.BASKETBALL));
+```
+
+
+
+## 五、集合框架（容器）
+
+### 1. List 、Set、Queue、Map
+
+- Collection 主要 List Set Queue组成：
+  - List：有序、可重复的集合；（**ArrayList**（封装了动态数组）、**LinkedList**（封装了链表））
+  - Set：无序、不可重复的集合；（HashSet 和 TreeSet）
+  - Queue：队列，双端队列（ArrayDeque）、优先级队列（PriorityQueue）
+- Map 代表键值对的集合，HashMap；
+
+#### 1.1 List
+
+存取有序，可以存放重复的元素，用下标对元素进行操作。
+
+- **ArrayList**
+
+  ```java
+  ArrayList<String> list = new ArrayList<String>();
+  
+  // 增
+  list.add("啦啦啦");
+  list.add("拉拉");
+  list.add("立");
+  // 指定位置添加 list.add(int index, E e);
+  // 遍历
+  for (int i = 0; i < list.size(); i++) {
+      String s = list.get(i);
+      System.out.println(s);
+  }
+  for (String s : list) {
+      System.out.println(s);
+  }
+  // 删 list.remove("立")
+  list.remove(1);
+  // 改
+  list.set(1, "lala");
+  // 查 倒序查
+  list.indexOf("啦啦啦");
+  list.lastIndexOf("啦啦啦");
+  // collections类的sort()可以对ArrayList进行排序
+  // 1111：collections.sort(list);
+  // 排序后，即可进行二分查找
+  // 2222：collections.binarySearch(list,"b");
+  ```
+  
+  - ArrayList是由数组实现的，支持随机存取（下标）；
+  
+  - 从尾部插入和删除元素快捷，但中间插入或删除低效；（涉及数组元素的复制和移动）
+  
+  - 内部数组容量不足时会自动扩容；（元素庞大时，效率低）`int newCapacity = oldCapacity + (oldCapacity >> 1);` 随后比较容量和指定容量的大小）
+  
+    第一次扩容=10，第二次扩容发生在添加第11个元素时
+  
+  - `System.arraycopy(源数组，索引，目标数组，索引，元素个数)` 来进行add或remove操作。（删除操作时，最后一位被设置为null，便于垃圾回收机制回收该空间）
+
+- **LinkedList**
+
+  ```java
+  LinkedList<String> list = new LinkedList<String>();
+  //增
+  list.add("啦啦啦");
+  list.add("拉拉");
+  list.add("立");
+  // 遍历 同上
+  // 删 remove(1);
+  // 改 set(1, "lala");
+  ```
+
+  - LinkedList是由双向链表实现的，不支持随机存取，只能从一端开始遍历，直到找到需要的元素；
+  - 插入和删除任意位置元素方便；
+  - 占用内存空间比ArrayList多一些；（每个元素存储 前一个和后一个节点的引用）
+
+#### 1.2 Set
+
+特点是存取无序，不可以存放重复元素，不可以用下标对元素进行操作
+
+- **HashSet** （由HashMap实现的，值由一个固定的Object填充，键用于操作）
+
+  ```java
+  HashSet<String> set = new HashSet<>();
+  //增
+  set.add("啦啦啦");
+  set.add("拉拉");
+  set.add("立");
+  System.out.println("元素个数：" + set.size());
+  
+  // 查
+  boolean contain = set.contains("lala");
+  System.out.println("?:" + contain);
+  
+  // 删
+  boolean removeOk = set.remove("立");
+  System.out.println("remove li?: " + removeOk);
+  
+  // 修改元素：~！！！需要先删除后添加；
+  boolean removeFlag = set.remove("拉拉");
+  boolean addLaLa = set.add("lala");
+  System.out.println("Modified set？ :" + (removeFlag && addLaLa));
+  
+  // 输出修改后的HashSet
+  System.out.println("HashSet after modification: " + set);
+  ```
+
+  - HashSet主要用于去重，比如统计一篇文章中有多少个不重复的单词；(因为它是用HashMap实现的，HashMap的键是唯一的，相同的键值会覆盖掉原来的，第二次`set.add("xx")`会覆盖上一次的`set.add("xx")`。)
+
+- **LinkedHashSet**
+
+- **TreeSet** 基于红黑树实现的有序集合，实现了SortedSet接口，可以自动对集合中的元素进行排序，按照键的自然顺序或指定的比较器顺序进行排序。
+
+  - 不允许插入null元素
+
+#### 1.3 [15. 三数之和 - 力扣（LeetCode）](https://leetcode.cn/problems/3sum/)
+
+给你一个整数数组 `nums` ，判断是否存在三元组 `[nums[i], nums[j], nums[k]]` 满足 `i != j`、`i != k` 且 `j != k` ，同时还满足 `nums[i] + nums[j] + nums[k] == 0` 。请你返回所有和为 `0` 且不重复的三元组。
+
+```java
+public static  List<List<Integer>> threeSum(int[] nums) {
+        List<List<Integer>> res = new ArrayList<>();
+        Arrays.sort(nums);
+        for (int i : nums)
+            System.out.print(i + " ");
+        for (int i = 0; i < nums.length; i++) {
+            if (i > 0 && nums[i] == nums[i-1])
+                continue;
+            for (int j = i + 1, k = nums.length-1; j < k; j++) {
+                if (j > i + 1 && nums[j] == nums[j - 1])
+                    continue;
+                while (j < k -1 && (nums[i] + nums[j] + nums[k-1] >= 0))
+                    k--;            // 末尾的探测过程
+                if (nums[i] + nums[j] + nums[k] == 0) {
+                    res.add(Arrays.asList(nums[i], nums[j], nums[k]));
+                }
+            }
+        }
+        return res;
+    }
+```
+
+
+
+#### 1.4 Queue
+
+队列，通常遵循**先进先出**的原则，新元素插入队列的尾部，访问元素返回队列的头部。
+
+- ArrayDeque
+
+  **基于数组实现的双端队列**，满足同时在数组两端插入或删除元素的需求，数组必须是循环的。
+
+  `deque.add()`, `deque.remove()`
+
+- **LinkedList** (!!!与作为List有很大不同！！！) 
+
+  选择使用 LinkedList 还是 ArrayDeque 时，需要根据具体的业务场景和需求来选择。如果需要在**双向队列的两端**进行频繁的插入和删除操作，并且**需要随机访问元素**，可以考虑使用 ArrayDeque；如果需要在**队列中间**进行频繁的插入和删除操作，可以考虑使用 LinkedList。
+
+  ```java
+  LinkedList<String> queue = new LinkedList<>();
+  // 增
+  queue.offer("啦啦啦");
+  queue.offer("拉拉");
+  queue.offer("啦");
+  // out(queue)
+  // 删， 队列，先进先出
+  queue.poll();
+  // out(queue)
+  // 不支持直接修改，需要先删除，再修改
+  queue.poll();
+  queu.offer("啦啦");
+  // 查
+  queue.get(0);
+  queue.contains("啦啦");
+  
+  // 查 适用迭代器方式遍历元素
+  Iterator<String> iterator = queue.iterator();
+  while (iterator.hasNext()) {
+      String ele = iterator.next();
+     	System.out.println(ele);
+  }
+  ```
+  
+  - 作为队列时：`offer()`将元素添加到队列的尾部；`poll()`从队列的头部删除元素
+  - LinkedList是链表结构，不支持随机访问元素，需要使用迭代器或者poll()方法依次遍历元素
+  
+- **PriorityQueue**
+
+  优先队列，它的出队顺序与元素的优先级有关，执行`remove()`或`poll()`方法，返回的总是**优先级最高**的元素
+
+  ```java
+  PriorityQueue<String> queue = new PriorityQueue<>();
+  // 增
+  queue.offer("啦啦啦");
+  queue.offer("拉拉");
+  queue.offer("啦");
+  // out  [啦，拉拉，啦啦啦]
+  // 删
+  queue.poll();
+  // out	[啦啦啦, 拉拉]
+  // 改：不支持直接修改，需要先删除再修改
+  String first = queue.poll();
+  queue.offer("改");
+  // out [拉拉, 改]
+  // 不支持随机访问元素，只能访问队首元素
+  // out (queue.peek()); // 拉拉
+  // for (String ele ： queue)
+  ```
+
+  - 通过实现Comparator接口按照总分的优先队列：
+
+  ```java
+  public class Student{
+      private String name;
+      private int score1;
+      private int score2;
+  
+      public Student(String name, int score1, int score2){
+          this.name = name;
+          this.score1 = score1;
+          this.score2 = score2;
+      }
+      public String getName(){
+          return  name;
+      }
+      public int getScore1(){
+          return score1;
+      }
+      public int getScore2(){
+          return score2;
+      }
+  
+      @Override
+      public String toString(){
+          return "Student{" + "name='" + name + '\'' + ", 总成绩=" + (score1 + score2) + '}';
+      }
+  }
+  class StudentComparator implements Comparator<Student> {
+  
+      @Override
+      public int compare(Student o1, Student o2) {
+          return Integer.compare(o2.getScore1() + o2.getScore2(), o1.getScore1() + o1.getScore2());
+      }
+  }
+  
+  public class Collection2_PriorityQueue {
+  
+      public static void main(String[] args) {
+          // !!!!!!
+          PriorityQueue<Student> pq = new PriorityQueue<>(new StudentComparator());
+  
+          pq.offer(new Student("王二", 80, 90));
+          System.out.println(pq);
+          pq.offer(new Student("小1", 95, 95));
+          System.out.println(pq);
+          pq.offer(new Student("肖佳琦", 90, 95));
+          System.out.println(pq);
+          pq.offer(new Student("沉默", 90, 80));
+          System.out.println(pq);
+          while(!pq.isEmpty()) {
+              System.out.println(pq.poll());
+          }
+      }
+  }
+  /*
+  [Student{name='王二', 总成绩=170}]
+  [Student{name='小1', 总成绩=190}, Student{name='王二', 总成绩=170}]
+  [Student{name='小1', 总成绩=190}, Student{name='王二', 总成绩=170}, Student{name='肖佳琦', 总成绩=185}]
+  [Student{name='小1', 总成绩=190}, Student{name='王二', 总成绩=170}, Student{name='肖佳琦', 总成绩=185}, Student{name='沉默', 总成绩=170}]
+  Student{name='小1', 总成绩=190} Student{name='肖佳琦', 总成绩=185} Student{name='沉默', 总成绩=170} Student{name='王二', 总成绩=170} 
+  */
+  ```
+
+#### 1.5 Map
+
+保存的是键值对，键要求保持唯一性，值可以重复
+
+- **HashMap**
+
+  - HashMap中的键和值都可以为null。如果键为null，那么该键映射到哈希表的第一个位置
+
+  - 可以使用迭代器或forEach方法遍历 HashMap中的键值对；
+
+  - HashMap有一个初始容量和一个负载因子。（通过数组形式实现， 初始大小，默认16，扩容前可以存储的键值对数量与表大小的比例，默认0.75）
+  ```java
+  HashMap<String, String> hashMap = new HashMap<>();
+  
+  // 增
+  hashMap.put("啦啦啦", "lalala");
+  hashMap.put("啦啦", "lala");
+  hashMap.put("啦", "la");
+  
+  // 获取指定键的值
+  String value1 = hashMap.get("啦啦");
+  
+  // 修改键对应的值
+  hashMap.put("啦", "LA");
+  String value2 = hashMap.get("啦");
+  
+  // 删
+  hashMap.remove("啦啦");
+  
+  for (String key : hashMap.keySet()) {
+      String value = hashMap.get(key);
+      System.out.println(key + "对应值：" + value);
+  }
+  ```
+
+- 初始大小 或者 数组的长度 是2的n次方时，`hash & (length - 1) = hash % length` （计算26%8， 11010 >>3  保留n位，即3位 010 =2）**`&`运算 比`%`运算更高效**
+
+  - $2^n$正好是偶数，-1后是奇数，且二进制最后一位是1，使得&运算后结果可能为偶数或奇数，保证哈希值的均匀分布。（同时，将哈希值的高位全部归零，只保留低位值
+
+  - **hash方法是用来做哈希值优化的**（h=hashCode(); h^h>>>16; (n-1)&hash）;为了增强随机性，让数据元素更加均衡的分布，减少碰撞。
+
+  ```java
+  int h,n = 16;
+  int hash = (key == null) ? 0 : (h=key.hashCode()) ^ (h >>>16);
+  int i = (n - 1) & hash;
+  // hash值 和 索引i
+  System.out.println(key + "的hash值 : " + hash +" 的索引 : " + i);
+  ```
+
+- **HashMap的扩容机制**
+
+  - JDK7 与JDK8的差异主要在hash方法上，7采用头插法（当哈希冲突采用拉链法时）
+
+  - JDK8：假设length=16，key1 = 5， key2 = 21；key & (length-1)哈希冲突（均为5）;
+
+    扩容，变为原来2倍32； key1 = 5 ==》 5；key2 = 21 ==》 5+16（扩容前位置+原数组长度）
+
+- **HashMap线程不安全**
+
+  - 多线程下扩容会死循环
+  - 多线程下put会导致元素丢失
+  - put和get并发时会导致get到null
+
+- **遍历HashMap**
+
+  - ```java
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+        // out entry.getKey();
+        // out entry.getValue();
+    }
+    
+    // 迭代 键或值
+    for (String key : map.keySet()) {
+        // out key
+    }
+    for (String value: map.values()) {
+        // out value
+    }
+    ```
+
+  - 
+
+
+- **LinkedHashMap**
+
+  HashMap 是无序的。LinkedHashMap是HashMap的子类，它使用链表来记录插入/访问**元素的顺序**。 （使用哈希表来存储数据，又用了双向链表来维持顺序）
+
+  - 访问顺序：`Map<String, String> linkedHashMap = new LinkedHashMap<>(16, .75f, true)`
+
+    参数分别表示，初始容量和负载因子，第三个参数为true表示要维护访问顺序；否则维护插入顺序，默认为false。（即最不经常访问的放在头部，get后的会放在尾部）
+
+  - 使用LinedHashMap来实现 LRU缓存（Least Recently Used）选择最近最久未被使用的页面淘汰
+
+- TreeSet
+
+  实现了SortedMap接口，自动将键按照自然顺序或指定的比较器顺序排序，并保证其元素顺序。（内部，使用红黑树来实现键的排序和查找）
+
+  ```java
+  Map<String, String> treeMap = new TreeMap<>();
+  // <>(Comparator.reverseOrder()); 反转顺序
+  ```
+
+  - `lastKey(), firstKey()`获取最后一个key和第一个key的方法
+  - `headMap(), tailMap()`获取指定key之前（不包含指定）和之后（包含指定）的key
+  - `subMap(n1, n2)`获取[n1, n2)的键值对
+
+
+####  TreeMap、HashMap、LinkedHashMap
+
+| 特性     | TreeMap  | HashMap  | LinkedHashMap    |
+| -------- | -------- | -------- | ---------------- |
+| 排序     | 支持     | 不支持   | 不支持           |
+| 插入顺序 | 不保证   | 不保证   | 保证             |
+| 查找效率 | O(lgn)   | O(1)     | O(1)             |
+| 空间占用 | 通常较大 | 通常较小 | 通常较大         |
+| 适用场景 | 需要排序 | 无需排序 | 需要保持插入顺序 |
+
+####  1.6 [2. 两数相加 - 力扣（LeetCode）](https://leetcode.cn/problems/add-two-numbers/)
+
+```java
+public static  ListNode addTwoNumbers(ListNode l1, ListNode l2) {
+        ListNode head = new ListNode(0);
+        ListNode cur = head;
+        int temp = 0;
+        while (l1 != null || l2 != null || temp != 0) {
+            int num1 = l1 == null ? 0 : l1.val;
+            int num2 = l2 == null ? 0 : l2.val;
+            temp += num1;
+            temp += num2;
+            ListNode newNode = new ListNode(temp % 10);
+            cur.next = newNode;
+            cur = cur.next;
+            temp = temp / 10;
+
+            if (l1 != null) l1 = l1.next;
+            if (l2 != null) l2 = l2.next;
+
+        }
+            return head;
+    }
+```
+
+
+
+#### 1.7 [19. 删除链表的倒数第 N 个结点 - 力扣（LeetCode）](https://leetcode.cn/problems/remove-nth-node-from-end-of-list/description/)
+
+ ```java 
+ public static ListNode removeNFromEnd(ListNode head, int n) {
+         ListNode dummyNode = new ListNode(0, head);
+ //        dummyNode.next = head;
+         ListNode cur = dummyNode;
+         // 双指针：
+         ListNode first = head;
+         for(int i = 0; i < n; i++) {
+             first = first.next;
+         }
+         while(first != null) {
+             first = first.next;
+             cur = cur.next;
+         }
+         cur.next = cur.next.next;
+         return dummyNode.next;
+     }
+ ```
+
+
+
+
 
 
 
